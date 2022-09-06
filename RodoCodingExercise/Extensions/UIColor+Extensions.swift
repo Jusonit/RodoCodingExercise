@@ -36,4 +36,6 @@ extension UIColor {
 
 struct ColorStyle {
     static let homeDarkGreen = UIColor(hex: "#0f401bff")
+    static let homeTextGreen = UIColor(hex: "#3CF774ff")
+    static let vehicleTypesBg = UIColor(hex: "#006661ff")
 }

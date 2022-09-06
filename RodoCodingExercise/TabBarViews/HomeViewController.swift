@@ -10,36 +10,20 @@ import UIKit
 
 class HomeViewController: UIViewController {
     
-    let vehicleType: [String] = [
-        "Compact",
-        "Minivan",
-        "Convertible",
-        "Sedan",
-        "Coupe",
-        "Small SUV",
-        "Hatchback",
-        "Sports",
-        "Hybrid",
-        "Electric",
-        "SUV",
-        "Midsize",
-        "Truck"
-    ]
+    var filteredSearch = [Any]()
     
-    lazy var titleTextView:UITextField = {
+    lazy var titleTextView: UITextField = {
         let textFiled = UITextField()
         textFiled.text = "RODO"
         textFiled.frame = CGRect(x: 100, y: 100, width: 200, height: 100)
         textFiled.font = UIFont.boldSystemFont(ofSize: 60)
         textFiled.textAlignment = .center
-        textFiled.textColor = .systemGreen
-//        textFiled.layer.borderColor = UIColor.blue.cgColor
-//        textFiled.layer.borderWidth = 1
+        textFiled.textColor = ColorStyle.homeTextGreen
         return textFiled
     }()
     
     lazy var searchFieldContainer: UIView = {
-        let sampleContainer = UIView(frame: CGRect(x: 0, y: 0, width: 300, height: 45.86))
+        let sampleContainer = UIView(frame: CGRect(x: 0, y: 0, width: 330, height: 45.86))
         sampleContainer.backgroundColor = .white
         sampleContainer.layer.cornerRadius = 20
         return sampleContainer
@@ -48,10 +32,7 @@ class HomeViewController: UIViewController {
     lazy var searchField: UITextField = {
         let sampleTextField =  UITextField(frame: CGRect(x: 20, y: 100, width: 330, height: 45.86))
         sampleTextField.placeholder = "SEARCH MAKE AND MODEL"
-        //        sampleTextField.font = UIFont.systemFont(ofSize: 15)
-        //            sampleTextField.borderStyle = .roundedRect
         sampleTextField.layer.cornerRadius = 15.0
-        //            sampleTextField.layer.borderWidth = 1.0
         sampleTextField.layer.borderColor = UIColor.white.cgColor
         sampleTextField.autocorrectionType = UITextAutocorrectionType.no
         sampleTextField.keyboardType = UIKeyboardType.default
@@ -60,7 +41,31 @@ class HomeViewController: UIViewController {
         sampleTextField.contentVerticalAlignment = UIControl.ContentVerticalAlignment.center
         sampleTextField.delegate = self
         return sampleTextField
-    } ()
+    }()
+    
+    lazy var searchButton: UIButton = {
+        let button = UIButton(frame: CGRect(x: 0, y: 0, width: 330, height: 45.86))
+        button.setTitle("SEARCH BY VEHICLE TYPE", for: .normal)
+        button.setTitleColor(.systemGreen, for: .normal)
+        button.addTarget(self, action: #selector(searchButtonTapped), for: .touchUpInside)
+        button.layer.cornerRadius = 20
+        button.layer.borderWidth = 2.0
+        button.layer.borderColor = ColorStyle.homeTextGreen?.cgColor
+        button.sizeToFit()
+        return button
+    }()
+    
+    lazy var dealsButton: UIButton = {
+        let button = UIButton(frame: CGRect(x: 0, y: 0, width: 330, height: 45.86))
+        button.setTitle("SEE DEALS OF THE DAY", for: .normal)
+        button.setTitleColor(.systemGreen, for: .normal)
+        button.addTarget(self, action: #selector(dealsButtonTapped), for: .touchUpInside)
+        button.layer.cornerRadius = 20
+        button.layer.borderWidth = 2.0
+        button.layer.borderColor = ColorStyle.homeTextGreen?.cgColor
+        button.sizeToFit()
+        return button
+    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -68,21 +73,50 @@ class HomeViewController: UIViewController {
         setupViews()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.navigationController?.navigationBar.isTranslucent = true
+    }
+    
     func setupViews() {
         
-        //rodo title
+        //adding subviews
+        //title
         view.addSubview(titleTextView)
-        
         //search container + search field
         view.addSubview(searchFieldContainer)
         searchFieldContainer.addSubview(searchField)
+        //search button
+        view.addSubview(searchButton)
+        //deals button
+        view.addSubview(dealsButton)
         
         //constraints
+        //title
+        titleTextView.positionAbove(searchFieldContainer, withOffset: 10)
+        titleTextView.centerHorizontallyInSuperview()
+        //search field
         searchFieldContainer.center = view.center
         searchField.pinToSideEdgesOfSuperview(withOffset: 5)
         searchField.centerVerticallyInSuperview()
-        titleTextView.positionAbove(searchFieldContainer, withOffset: 10)
-        titleTextView.centerHorizontallyInSuperview()
+        //search button
+        searchButton.positionBelow(searchFieldContainer, withOffset: 50)
+        searchButton.centerHorizontallyInSuperview()
+        searchButton.sizeWidthToWidth(of: searchFieldContainer)
+        //deals button
+        dealsButton.positionBelow(searchButton, withOffset: 20)
+        dealsButton.centerHorizontallyInSuperview()
+        dealsButton.sizeWidthToWidth(of: searchFieldContainer)
+    }
+    
+    @objc func searchButtonTapped() {
+        let vehiclesVC = VehiclesViewController()
+        vehiclesVC.modalPresentationStyle = .fullScreen
+        self.navigationController?.pushViewController(vehiclesVC, animated: true)
+    }
+    
+    @objc func dealsButtonTapped() {
+        textFieldShouldReturn(searchField)
     }
 }
 
@@ -128,9 +162,36 @@ extension HomeViewController: UITextFieldDelegate {
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         // called when 'return' key pressed. return NO to ignore.
-        print("TextField should return method called")
-        print("text field entered:", searchField.text as Any)
         // may be useful: textField.resignFirstResponder()
+        let fullSearch = searchField.text?.components(separatedBy: " ")
+        
+        if let path = Bundle.main.path(forResource: "Exercise_Dataset", ofType: "json") {
+            do {
+                let data = try Data(contentsOf: URL(fileURLWithPath: path), options: .mappedIfSafe)
+                let jsonResult = try JSONSerialization.jsonObject(with: data, options: .mutableLeaves)
+                if let json = jsonResult as? [Any] {
+                    //json is an array
+                    filteredSearch = json
+                    
+                    guard let fullSearch = fullSearch else { return true }
+                    let numOfKeywords = fullSearch.count
+                    
+                    filteredSearch = filteredSearch.filter({ item in
+                        for i in 0...numOfKeywords-1 {
+                            if (item as AnyObject).contains(fullSearch[i] as Any) {
+                                return (item as AnyObject).contains(fullSearch[i] as Any)
+                            }
+                        }
+                        return false
+                    })
+                    print("filtered Search: ", filteredSearch)
+                    print("Number of Vehicles:", filteredSearch.count)
+                }
+            } catch {
+                print("error:", error)
+            }
+        }
+        
         return true
     }
     

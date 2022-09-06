@@ -25,11 +25,11 @@ class LandingView: UITabBarController {
     func setupTabBar() {
         
         viewControllers = [
-            createNavController(for: homeVC, title: nil, image: UIImage(systemName: "house")!),
-            createNavController(for: messageVC, title: nil, image: UIImage(systemName: "message")!),
-            createNavController(for: favoritesVC, title: nil, image: UIImage(systemName: "heart")!),
-            createNavController(for: uploadsVC, title: nil, image: UIImage(systemName: "square.and.arrow.up")!),
-            createNavController(for: settingsVC, title: nil, image: UIImage(systemName: "gear")!)
+            createNavController(for: homeVC, title: nil, image: UIImage(named: "house")!),
+            createNavController(for: messageVC, title: nil, image: UIImage(named: "message")!),
+            createNavController(for: favoritesVC, title: nil, image: UIImage(named: "heart")!),
+            createNavController(for: uploadsVC, title: nil, image: UIImage(named: "square.and.arrow.up")!),
+            createNavController(for: settingsVC, title: nil, image: UIImage(named: "gear")!)
         ]
         
         UITabBar.appearance().barTintColor = .systemBackground
